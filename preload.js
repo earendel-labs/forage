@@ -42,6 +42,7 @@ class Load extends Phaser.Scene { //inherits all the charactersitcs tfrom Phase.
         this.load.audio("hurt","sounds/negative_2.wav");
         this.load.audio("fly","sounds/fly.mp3");
         this.load.audio("laser","sounds/laser.mp3");
+        this.load.audio("explosion","sounds/explosion.mp3");
         
         //load font
         this.load.bitmapFont("peaFont","fonts/GoldPeaberry.png","fonts/GoldPeaberry.xml" );
@@ -89,7 +90,7 @@ class Load extends Phaser.Scene { //inherits all the charactersitcs tfrom Phase.
         });
 
         this.add.text(20, 20, "Loading game..."); //text on first loading screen
-        this.scene.start("foragePlayScene");
+        this.scene.start("mainMenu");
         
     }
 }

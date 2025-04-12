@@ -1,7 +1,7 @@
 /// <reference path="./node_modules/phaser/types/phaser.d.ts" />
 
 var gameSetting = {
-    playerSpeed: 400,
+    playerSpeed: 500,
     mapSpeed: 600, //map speed for the world map 
     backgroundSpeed: 4 //controls scroll on map for pollen buster 
     

@@ -11,6 +11,7 @@ class PlayScene extends Phaser.Scene {
         this.fly_sound = this.sound.add("fly");
         this.laser_sound = this.sound.add("laser");
         this.hurt_sound = this.sound.add("hurt");
+        this.explosion_sound = this.sound.add("explosion");
 
         //Load Background to game and set origin 
         this.background = this.add.tileSprite(0,0,config.width,config.height,"scene_background");
@@ -28,11 +29,11 @@ class PlayScene extends Phaser.Scene {
         this.maxHealth = 100;
         this.currentHealth = this.maxHealth;
         // Health bar background
-        this.healthBarBackground = this.add.rectangle(config.width - 160, 25, 120, 20, 0x555555);
+        this.healthBarBackground = this.add.rectangle(config.width - 160, 40, 120, 20, 0x555555);
         this.healthBarBackground.setOrigin(0, 0.5);
 
         // Health bar fill
-        this.healthBarFill = this.add.rectangle(config.width - 160, 25, 120, 20, 0xff0000);
+        this.healthBarFill = this.add.rectangle(config.width - 160, 40, 120, 20, 0xff0000);
         this.healthBarFill.setOrigin(0, 0.5);
 
       
@@ -47,10 +48,11 @@ class PlayScene extends Phaser.Scene {
             targets: this.player,
             y: config.height/2,
             ease: "Linear",
-            duration: 250,
+            duration: 1000,
             repeat: 0,
             onComplete: function(){
                 this.player.alpha = 1;
+                this.startResourceSpawnRamp();
             },
             callbackScope: this
         });
@@ -68,14 +70,19 @@ class PlayScene extends Phaser.Scene {
             classType: Phaser.Physics.Arcade.Sprite,
             runChildUpdate: true
         });
+        /*
         this.time.addEvent({
             delay: 1000, // spawn every 2 seconds
             callback: this.spawnResource,
             callbackScope: this,
             loop: true
         });
+        */
         //add overlap for projectiles and resources
         this.physics.add.overlap(this.projectiles, this.resources, this.hitResource, null, this);
+        //overlap for player and resources 
+        this.physics.add.overlap(this.player, this.resources, this.playerHitByResource, null, this);
+
 
 
         //pollen spawning 
@@ -85,8 +92,9 @@ class PlayScene extends Phaser.Scene {
         this.physics.add.overlap(this.player, this.greenPollenGroup, this.collectGreenPollen, null, this);
         this.physics.add.overlap(this.player, this.yellowPollenGroup, this.collectYellowPollen, null, this);
 
+        
         this.time.addEvent({
-            delay: 3000, // every 10 seconds
+            delay: 3000, 
             callback: () => {
                 this.greenPollenChance = Math.max(0.25, this.greenPollenChance - 0.1); // decrease by 10%, down to 0%
                 console.log("Green Pollen Chance:", this.greenPollenChance);
@@ -95,14 +103,8 @@ class PlayScene extends Phaser.Scene {
         });
         
 
-
-
-        //Load Pollen node 
-        //this.pollen_node = this.add.sprite(config.width/2 -300 ,config.height/2, "pollen_node");   //image
-        //this.pollen_node.play("pollen_node_anim");
-
-
         // Add black bar for the top to highlight score
+        /*
         var graphics = this.add.graphics();
         graphics.fillStyle(0x000000,1);
         graphics.beginPath();
@@ -113,10 +115,15 @@ class PlayScene extends Phaser.Scene {
         graphics.lineTo(0,0);
         graphics.closePath();
         graphics.fillPath();
+        */
         //Score label 
-        this.scoreLabel = this.add.bitmapText(10,5,"peaFont", "SCORE", 30);
+        this.scoreLabel = this.add.bitmapText(10,5,"peaFont", "Score", 20);
         this.score = 0;
         this.scoreLabel.text = "SCORE   " + this.score;
+
+         //Score label 
+        this.healthLabel = this.add.bitmapText(config.width -160,5,"peaFont", "Health", 20);
+        this.healthLabel.text = "Health   " + this.currentHealth;
 
 
     }
@@ -161,32 +168,7 @@ class PlayScene extends Phaser.Scene {
     
         // function to control the movement of player with left and right 
     movePlayerManager() {
-        /*
-        //X axis movement 
-        if(this.cursorKeys.left.isDown){
-            
-            this.player.setVelocityX(-gameSetting.playerSpeed);
-            
-        } else if(this.cursorKeys.right.isDown) {
-           
-            this.player.setVelocityX(gameSetting.playerSpeed);
-            
-        } else {
-            // Reset X velocity if no keys are pressed
-            this.player.setVelocityX(0);
-        }
-        //Y axis movement 
-        if(this.cursorKeys.up.isDown){
-            this.player.setVelocityY(-gameSetting.playerSpeed);
-            
-        } else if(this.cursorKeys.down.isDown) {
-            this.player.setVelocityY(gameSetting.playerSpeed);
-           
-        }  else {
-            // Reset X velocity if no keys are pressed
-            this.player.setVelocityY(0);
-        }
-        */
+        
         this.player.setVelocity(0);
         let isMoving = false;
 
@@ -281,7 +263,7 @@ class PlayScene extends Phaser.Scene {
             const pollen = group.create(x, y, pollenType);
             pollen.setScale(0.4);
             pollen.setVelocity(
-                Phaser.Math.Between(-100, 100),
+                Phaser.Math.Between(-150, 150),
                 Phaser.Math.Between(-150, -250)
             );
             pollen.setGravityY(300); // so it falls back down
@@ -303,7 +285,7 @@ class PlayScene extends Phaser.Scene {
         pollen.destroy();
         // Decrease player health
         if (pollen.texture.key === 'yellow_pollen') {
-            this.currentHealth -= 20;
+            this.currentHealth = Math.max(0, this.currentHealth - 20);
             this.updateHealthBar();
         }
         // Optional: Flash red or play sound
@@ -311,6 +293,7 @@ class PlayScene extends Phaser.Scene {
     }
 
     updateHealthBar() {
+        this.healthLabel.text = "Health   " + this.currentHealth;
         const percentage = this.currentHealth / this.maxHealth;
         this.healthBarFill.width = 120 * percentage;
     
@@ -318,24 +301,99 @@ class PlayScene extends Phaser.Scene {
             this.gameOver();
         }
     }
+
+    playerHitByResource(player, resource) {
+        // Destroy the resource
+        resource.destroy();
+    
+        // Only proceed if player is not already in a hit state (optional debounce)
+        if (this.player.isInvulnerable) return;
+    
+        // Play explosion animation
+        const explosion = this.add.sprite(player.x, player.y, 'explosion_anim');
+        explosion.play('explosion_anim');
+        explosion.on('animationcomplete', () => {
+            explosion.destroy();
+        });
+    
+        // Deduct health
+        this.currentHealth = Math.max(0, this.currentHealth - 40);
+
+        this.updateHealthBar();
+    
+        // Check for game over
+        if (this.currentHealth <= 0) {
+            this.gameOver();
+            return;
+        }
+    
+        // Hide player and make invulnerable
+        this.player.setAlpha(0);
+        this.player.isInvulnerable = true;
+    
+        // Tween to return the player to the screen
+        this.tweens.add({
+            targets: this.player,
+            y: config.height / 2,
+            alpha: 1,
+            ease: "Linear",
+            duration: 1500,
+            onComplete: () => {
+                this.player.isInvulnerable = false;
+            }
+        });
+    
+        // Optional: move the player off-screen before tween
+        this.explosion_sound.play();
+        this.player.setPosition(config.width/2,config.height + 300);
+    }
+    
+    startResourceSpawnRamp() {
+        this.resourceSpawnDelay = 1500;       // Start with 1.5 seconds delay
+        this.minSpawnDelay = 500;             // Stop decreasing at 0.5 seconds
+        this.spawnDelayDecrement = 100;       // Decrease delay by 100ms every step
+        this.delayRampInterval = 4000;       // Every 10 seconds, decrease the delay
+    
+        // Resource spawn event (initial)
+        this.resourceSpawnEvent = this.time.addEvent({
+            delay: this.resourceSpawnDelay,
+            callback: this.spawnResource,
+            callbackScope: this,
+            loop: true
+        });
+    
+        // Timer to gradually reduce the delay
+        this.time.addEvent({
+            delay: this.delayRampInterval,
+            callback: () => {
+                if (this.resourceSpawnDelay > this.minSpawnDelay) {
+                    this.resourceSpawnDelay -= this.spawnDelayDecrement;
+    
+                    // Restart the spawn event with new delay
+                    this.resourceSpawnEvent.remove(); // remove old
+                    this.resourceSpawnEvent = this.time.addEvent({
+                        delay: this.resourceSpawnDelay,
+                        callback: this.spawnResource,
+                        callbackScope: this,
+                        loop: true
+                    });
+    
+                    console.log("New spawn delay:", this.resourceSpawnDelay);
+                }
+            },
+            loop: true
+        });
+    }
+    
+
+
+
     gameOver() {
-        this.scene.pause(); // Stop game updates
+       
     
         // Display "GAME OVER"
-        this.add.text(config.width / 2, config.height / 2 - 50, 'GAME OVER', {
-            fontSize: '48px',
-            color: '#ffffff',
-            fontFamily: 'Arial',
-            align: 'center'
-        }).setOrigin(0.5);
-    
-        // Display final score
-        this.add.text(config.width / 2, config.height / 2, `Final Score: ${this.score}`, {
-            fontSize: '32px',
-            color: '#ffff00',
-            fontFamily: 'Arial',
-            align: 'center'
-        }).setOrigin(0.5);
+        this.add.bitmapText(config.width/2, config.height/2 - 70, "peaFont", "GAME OVER",80).setOrigin(0.5);
+        this.add.bitmapText(config.width / 2, config.height / 2, "peaFont", `Final Score: ${this.score}`,40).setOrigin(0.5);
     
         // Display "Click to Restart"
         const restartText = this.add.text(config.width / 2, config.height / 2 + 60, 'Click to Restart', {
@@ -344,13 +402,19 @@ class PlayScene extends Phaser.Scene {
             fontFamily: 'Arial',
             align: 'center'
         }).setOrigin(0.5);
+
+        this.player.disableBody();
+        this.player.setVisible(false);
+
+       
     
         // Make the restart text interactive
         restartText.setInteractive({ useHandCursor: true });
         restartText.on('pointerdown', () => {
             this.scene.restart(); // Restarts the current scene
         });
-    
+        
+      //  this.scene.pause(); // Stop game updates
     }
     
     
