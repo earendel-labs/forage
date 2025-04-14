@@ -11,6 +11,7 @@ class Load extends Phaser.Scene { //inherits all the charactersitcs tfrom Phase.
         this.load.image("menu_background", "assets/background-menu.jpg");
         this.load.image("scene_background", "assets/background-sprite.png");
         this.load.image('worldMap', 'assets/world-map.jpg'); // Load the world map
+        this.load.image("destroyed_node", "assets/destroyed_node.png");
        
         this.load.spritesheet("player", "assets/ship.png", {  //Load Bee
             frameWidth: 256,
@@ -24,7 +25,7 @@ class Load extends Phaser.Scene { //inherits all the charactersitcs tfrom Phase.
             frameWidth: 128,
             frameHeight: 128
         });
-        this.load.spritesheet("yellow_pollen", "assets/yellow_pollen.png", {
+        this.load.spritesheet("red_pollen", "assets/red_pollen.png", {
             frameWidth: 128,
             frameHeight: 128
         });
@@ -36,6 +37,10 @@ class Load extends Phaser.Scene { //inherits all the charactersitcs tfrom Phase.
             frameWidth: 130,
             frameHeight: 130
         });
+        this.load.spritesheet("explosion2", "assets/explosion2.png", {
+            frameWidth: 128,
+            frameHeight: 128
+        });
 
         //load sounds 
         this.load.audio("collect","sounds/misc_menu_4.wav");
@@ -43,6 +48,9 @@ class Load extends Phaser.Scene { //inherits all the charactersitcs tfrom Phase.
         this.load.audio("fly","sounds/fly.mp3");
         this.load.audio("laser","sounds/laser.mp3");
         this.load.audio("explosion","sounds/explosion.mp3");
+        this.load.audio("hurt_man","sounds/hurt_man.mp3");
+        this.load.audio("boom","sounds/pop.mp3");
+        this.load.audio("break","sounds/boom2.mp3");
         
         //load font
         this.load.bitmapFont("peaFont","fonts/GoldPeaberry.png","fonts/GoldPeaberry.xml" );
@@ -71,8 +79,8 @@ class Load extends Phaser.Scene { //inherits all the charactersitcs tfrom Phase.
             repeat: -1
         });
         this.anims.create({
-            key: "yellow_pollen_anim",
-            frames: this.anims.generateFrameNumbers("yellow_pollen"),
+            key: "red_pollen_anim",
+            frames: this.anims.generateFrameNumbers("red_pollen"),
             frameRate: 5,
             repeat: -1
         });
@@ -86,6 +94,12 @@ class Load extends Phaser.Scene { //inherits all the charactersitcs tfrom Phase.
             key: "explosion_anim",
             frames: this.anims.generateFrameNumbers("explosion"),
             frameRate: 30,
+            repeat: 0
+        });
+        this.anims.create({
+            key: "explosion2_anim",
+            frames: this.anims.generateFrameNumbers("explosion2"),
+            frameRate: 45,
             repeat: 0
         });
 

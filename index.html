@@ -6,23 +6,30 @@
 
     <!-- Add this style block -->
     <style>
+        @font-face {
+            font-family: 'VeraHumana';
+            src: url('fonts/Verah___.ttf') format('truetype');
+        }
+    
         body {
             margin: 0;
             padding: 0;
-            background-color: #111131; /* You can change this to any background color */
+            background-color: #111131;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             overflow: hidden;
+            font-family: 'VeraHumana', sans-serif;
         }
-
+    
         canvas {
             display: block;
-            border: 2px solid #ffffff20; /* optional border */
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.1); /* optional subtle glow */
+            border: 2px solid #ffffff20;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
         }
     </style>
+    
 
     <!-- Your scripts -->
     <script type="text/javascript" src="phaser.min.js"></script>
